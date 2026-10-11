@@ -294,7 +294,84 @@ function renderCharts(rows) {
   ], { max: 100 });
 }
 
+// -----------------------------
+// Cloud Instances Panel
+// -----------------------------
+function esc(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
+async function loadCloud() {
+
+  const box = document.getElementById("cloudBox");
+
+  if (!box) return;
+
+  try {
+
+    const c = await api("/cloud");
+
+    if (c.mode !== "emulator") {
+
+      box.innerHTML =
+        `<div class="cloud-note">Cloud adapter is off.${
+          c.error ? " Reason: " + esc(c.error) : ""
+        }</div>`;
+
+      return;
+    }
+
+    const chips = c.instances
+      .map(id => `<span class="chip">${esc(id)}</span>`)
+      .join("");
+
+    const eventRows = c.events.length
+      ? c.events.map(e => `
+          <tr>
+            <td>${esc(e.time)}</td>
+            <td><b>${e.action === "launch" ? "Launched" : "Terminated"}</b></td>
+            <td>${e.instances.map(esc).join(", ")}</td>
+          </tr>`).join("")
+      : `<tr><td colspan="3">No events yet.</td></tr>`;
+
+    box.innerHTML = `
+      <div class="cloud-meta">
+        <div class="decision-item">
+          <span>Provider</span><strong>${esc(c.provider)}</strong>
+        </div>
+        <div class="decision-item">
+          <span>Region</span><strong>${esc(c.region)}</strong>
+        </div>
+        <div class="decision-item">
+          <span>Running instances</span><strong>${c.instances.length}</strong>
+        </div>
+      </div>
+
+      <div class="chip-row">${chips}</div>
+
+      <table class="compare-table cloud-events">
+        <thead>
+          <tr><th>Time</th><th>Action</th><th>Instances</th></tr>
+        </thead>
+        <tbody>${eventRows}</tbody>
+      </table>
+
+      <p class="cloud-note">
+        Scale Out launches an instance and Scale In terminates one through the
+        AWS EC2 API (boto3). The instances live in a local AWS emulator, so no
+        real AWS resources are created.
+      </p>
+    `;
+
+  } catch (error) {
+
+    box.textContent = "Cloud status unavailable: " + error.message;
+
+  }
+}
 // -----------------------------
 // Display History
 // -----------------------------
@@ -341,6 +418,8 @@ async function loadHistory() {
     renderHistory(rows);
 
     await loadStats();
+    
+    await loadCloud();
 
   } catch (error) {
 

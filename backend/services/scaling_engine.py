@@ -1,6 +1,6 @@
 from datetime import datetime
 from database.db import get_connection
-
+from services.cloud_adapter import sync_instances
 MIN_SERVERS = 1
 MAX_SERVERS = 10
 CAPACITY_PER_SERVER = 200
@@ -30,7 +30,7 @@ def _load_last_servers():
 
 
 _state = {"servers": _load_last_servers()}
-
+sync_instances(_state["servers"])
 
 def calculate_metrics(traffic, servers):
 
@@ -114,6 +114,8 @@ def run_simulation(traffic):
     action, reason, after = decide_action(metrics, before)
 
     _state["servers"] = after
+    
+    cloud = sync_instances(after)
 
     metrics["cost"] = round(after * COST_PER_SERVER, 2)
 
@@ -155,7 +157,8 @@ def run_simulation(traffic):
         **metrics,
         "servers": after,
         "action": action,
-        "reason": reason
+        "reason": reason,
+        "cloud": cloud
     }
 
 
@@ -175,6 +178,7 @@ def get_current_state():
 
 def reset_state():
     _state["servers"] = 2
+    sync_instances(2)
 
 
 def compare_workloads(workloads, fixed_servers):

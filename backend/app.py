@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from database.db import init_db, get_connection
+from services.cloud_adapter import cloud_status
 from services.scaling_engine import (
     run_simulation, get_current_state, reset_state,
     compare_workloads, MAX_SERVERS
@@ -20,7 +21,9 @@ def health():
 def state():
     return jsonify(get_current_state())
 
-
+@app.get("/api/cloud")
+def cloud():
+    return jsonify(cloud_status())
 @app.post("/api/simulate")
 def simulate():
     data = request.get_json(silent=True) or {}

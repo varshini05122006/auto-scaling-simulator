@@ -570,3 +570,44 @@ tbody tr:last-child td { border-bottom: none; }
   header h1 { font-size: 21px; }
   .status { font-size: 12px; }
 }
+/* =========================================================
+   CLOUD INSTANCES PANEL
+========================================================= */
+
+.cloud-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.chip-row {
+  margin: 14px 0 6px;
+}
+
+.chip {
+  display: inline-block;
+  margin: 4px 8px 4px 0;
+  padding: 6px 12px;
+  border: 1px solid #cfe0ee;
+  border-radius: 20px;
+  background: #eaf2f9;
+  color: var(--navy-800);
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
+
+.cloud-events td:last-child {
+  text-align: left;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.cloud-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}

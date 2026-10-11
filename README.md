@@ -3,15 +3,16 @@
 **Course:** CSI3001 – Cloud Computing Methodologies
 **Student:** Varshini (24MID0257)
 
-A web-based dashboard that simulates cloud auto-scaling. It accepts traffic values, calculates simulated resource utilisation, and decides whether to **Scale Out**, **Scale In** or **Maintain** the number of servers.
+A web-based dashboard that simulates cloud auto-scaling. It accepts traffic values, calculates simulated resource utilisation, and decides whether to **Scale Out**, **Scale In** or **Maintain** the number of servers. A cloud adapter mirrors every scaling decision as EC2 launch and terminate calls through the AWS SDK (boto3).
 
-> **Important:** this is a functional **simulation**. CPU, memory, latency, throughput and network values are calculated by formulas. The project does not currently create or delete servers on AWS, Azure or any other cloud provider.
+> **Important:** this is a functional **simulation**. CPU, memory, latency, throughput and network values are calculated by formulas. The EC2 calls are made against **moto, a local AWS emulator**, so no real AWS resources are created and no AWS account or keys are used.
 
 ## How it works
 
 ```
 Traffic -> Utilisation (CPU, memory, latency) -> Threshold comparison
         -> Scale Out / Maintain / Scale In -> Server count updated
+        -> Cloud adapter: EC2 instances launched / terminated (emulator)
         -> Stored in SQLite -> Statistics, history and charts on the dashboard
 ```
 
@@ -23,7 +24,7 @@ Traffic -> Utilisation (CPU, memory, latency) -> Threshold comparison
 | Capacity per server | 200 traffic units |
 | **Scale Out** | CPU > 75% **OR** Memory > 75% **OR** Latency > 250 ms |
 | **Scale In** | CPU < 30% **AND** Memory < 45% **AND** Latency < 130 ms (and servers > 1) |
-| **Maintain** | Otherwise |
+| **Maintain** | Otherwise (including when the 10-server maximum is reached) |
 | Cost | 0.05 per server per step |
 
 ## Features
@@ -32,8 +33,22 @@ Traffic -> Utilisation (CPU, memory, latency) -> Threshold comparison
 - Latest scaling decision panel (action, servers before and after, reason)
 - Auto-scaling vs fixed-servers comparison (cost, latency, SLA violations)
 - Eight performance charts with policy limit lines (CPU, memory, latency, servers, traffic vs capacity, cost, throughput, network)
+- Cloud Instances panel: EC2 instances launched and terminated by the scaling decisions, with an event log
 - Statistics cards, simulation history table and CSV export
 - The server count is restored from the database after a backend restart
+
+## Cloud integration
+
+The scaling engine calls a small adapter (`backend/services/cloud_adapter.py`) after every decision. The adapter keeps the number of running EC2 instances equal to the simulated server count:
+
+- **Scale Out** calls `run_instances` (launch)
+- **Scale In** calls `terminate_instances` (terminate)
+
+The calls use the real AWS SDK for Python (boto3). By default they run against **moto**, a local AWS emulator, which needs no account, keys or internet. If the adapter fails for any reason, the simulation keeps running and the error is shown in the status.
+
+Set the environment variable `CLOUD_MODE=off` to disable the adapter.
+
+Pointing the adapter at real AWS is future work. It would need an AWS account, limited IAM credentials and safety limits on the number of instances.
 
 ## Technology stack
 
@@ -42,13 +57,15 @@ Traffic -> Utilisation (CPU, memory, latency) -> Threshold comparison
 | Frontend | HTML5, CSS3, JavaScript, Chart.js |
 | Backend | Python, Flask, Flask-CORS |
 | Database | SQLite |
+| Cloud API layer | boto3 with moto (local AWS emulator) |
 | Communication | REST API, JSON, Fetch API |
 
 ## Architecture
 
 ```
 User -> Web dashboard (HTML/CSS/JS) -> Fetch API -> Flask REST API
-     -> Python scaling engine -> SQLite database -> Statistics and history -> Dashboard
+     -> Python scaling engine -> Cloud adapter (boto3 -> moto emulator)
+     -> SQLite database -> Statistics and history -> Dashboard
 ```
 
 The frontend never connects to SQLite directly. It talks only to the Flask REST API.
@@ -61,51 +78,4 @@ The frontend never connects to SQLite directly. It talks only to the Flask REST 
 | GET | `/api/state` | Current server count and limits |
 | POST | `/api/simulate` | Run one simulation, body: `{"traffic": 500}` |
 | GET | `/api/simulations` | Stored simulation history |
-| GET | `/api/stats` | Totals and averages |
-| DELETE | `/api/simulations` | Clear history and reset servers to 2 |
-| POST | `/api/compare` | Compare auto-scaling with a fixed server count |
-
-## Project structure
-
-```
-backend/
-  app.py                    Flask REST API
-  database/db.py            SQLite connection and table creation
-  services/scaling_engine.py  Metrics, scaling decisions, comparison
-frontend/
-  index.html, app.js, style.css
-database/
-requirements.txt
-start_project.bat           Windows helper that starts both servers
-```
-
-## Run locally
-
-1. Install the packages once: `py -m pip install -r requirements.txt` (use `python` if `py` is not available)
-2. Start the backend:
-```
-   cd backend
-   py app.py
-```
-3. Start the frontend in a second terminal:
-```
-   cd frontend
-   py -m http.server 5500
-```
-4. Open http://127.0.0.1:5500
-
-On Windows you can also double-click `start_project.bat`.
-
-## Limitations
-
-- Metrics are simulated, not measured from real servers.
-- No real cloud resources are created or deleted.
-- Scaling changes one server per step, so sudden spikes can cause temporary SLA violations.
-
-## Future work
-
-- Integrate the AWS EC2 API (launch on Scale Out, terminate on Scale In)
-- Read real utilisation from cloud monitoring (for example CloudWatch)
-- Predictive scaling using workload forecasting
-- Editable scaling policy and cooldown period
-- Cloud deployment
+| GET |

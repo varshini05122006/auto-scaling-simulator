@@ -1,2 +1,4 @@
 flask
 flask-cors
+boto3
+moto[ec2]
