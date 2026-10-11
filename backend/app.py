@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from pathlib import Path
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from database.db import init_db, get_connection
 from services.cloud_adapter import cloud_status
@@ -6,6 +7,8 @@ from services.scaling_engine import (
     run_simulation, get_current_state, reset_state,
     compare_workloads, MAX_SERVERS
 )
+
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 
 app = Flask(__name__)
 CORS(app)
@@ -118,7 +121,14 @@ def compare():
 
     return jsonify(compare_workloads(workloads, fixed))
 
+@app.get("/")
+def index():
+    return send_from_directory(FRONTEND_DIR, "index.html")
 
+
+@app.get("/<path:filename>")
+def frontend_files(filename):
+    return send_from_directory(FRONTEND_DIR, filename)
 if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
