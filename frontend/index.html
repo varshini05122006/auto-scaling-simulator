@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto-Scaling Simulator</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Auto-Scaling Simulator</h1>
+    <p>Dynamic Cloud Resource Allocation Dashboard</p>
+  </div>
+  <span id="status" class="status">Backend: checking...</span>
+</header>
+
+<main>
+  <section class="cards">
+    <div class="card"><span>Active Servers</span><strong id="servers">-</strong></div>
+    <div class="card"><span>CPU</span><strong id="cpu">-</strong></div>
+    <div class="card"><span>Memory</span><strong id="memory">-</strong></div>
+    <div class="card"><span>Latency</span><strong id="latency">-</strong></div>
+    <div class="card"><span>Throughput</span><strong id="throughput">-</strong></div>
+    <div class="card"><span>Network</span><strong id="network">-</strong></div>
+  </section>
+
+  <section class="cards stats-cards">
+    <div class="card stat-card"><span>Total Runs</span><strong id="totalRuns">-</strong></div>
+    <div class="card stat-card"><span>Average CPU</span><strong id="avgCpu">-</strong></div>
+    <div class="card stat-card"><span>Average Memory</span><strong id="avgMemory">-</strong></div>
+    <div class="card stat-card"><span>Average Latency</span><strong id="avgLatency">-</strong></div>
+    <div class="card stat-card"><span>Max Servers</span><strong id="maxServers">-</strong></div>
+    <div class="card stat-card"><span>Total Cost</span><strong id="totalCost">-</strong></div>
+  </section>
+
+  <section class="panel">
+    <h2>Run Simulation</h2>
+    <form id="simulationForm">
+      <label for="traffic">Request / Traffic Rate</label>
+      <input id="traffic" type="number" min="0" value="300" required>
+      <button type="submit">Run Simulation</button>
+      <button type="button" id="startBtn">▶ Start Automatic Simulation</button>
+      <button type="button" class="secondary" id="stopBtn">⏹ Stop Simulation</button>
+      <button type="button" class="secondary" id="clearBtn">Reset History</button>
+    </form>
+    <div class="pattern-row">
+      <label for="pattern">Automatic Workload Pattern</label>
+      <select id="pattern">
+        <option value="default">Default Sequence</option>
+        <option value="spike">Sudden Spike</option>
+        <option value="gradual">Gradual Increase</option>
+        <option value="daily">Daily Pattern</option>
+        <option value="random">Random Traffic</option>
+      </select>
+    </div>
+    <div id="result" class="result">Enter a workload and run the simulation.</div>
+    <div class="policy">
+      <h3>Scaling Policy</h3>
+      <div>CPU &gt; 75% OR Memory &gt; 75% OR Latency &gt; 250 ms → <b>Scale Out</b></div>
+      <div>CPU &lt; 30% AND Memory &lt; 45% AND Latency &lt; 130 ms → <b>Scale In</b></div>
+      <div>Otherwise → <b>Maintain</b></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Latest Scaling Decision</h2>
+    <div id="decisionBox" class="decision-box">
+      No decision yet. Run a simulation.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Auto-Scaling vs Fixed Servers</h2>
+    <label for="fixedServers">Fixed Server Count (static provisioning)</label>
+    <input id="fixedServers" type="number" min="1" max="10" value="5">
+    <button type="button" id="compareBtn">Compare using selected pattern</button>
+    <div id="compareResult" class="result">
+      Choose a workload pattern above, then click Compare.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Performance Trends</h2>
+    <p class="chart-note">
+      Dashed lines are the policy limits. Dot colours:
+      <b style="color:#dc2626">red = Scale Out</b>,
+      <b style="color:#16a34a">green = Scale In</b>,
+      <b style="color:#64748b">grey = Maintain</b>.
+    </p>
+    <div class="chart-grid">
+      <div class="chart-box"><canvas id="chartCpu"></canvas></div>
+      <div class="chart-box"><canvas id="chartMemory"></canvas></div>
+      <div class="chart-box"><canvas id="chartLatency"></canvas></div>
+      <div class="chart-box"><canvas id="chartServers"></canvas></div>
+      <div class="chart-box"><canvas id="chartTraffic"></canvas></div>
+      <div class="chart-box"><canvas id="chartCost"></canvas></div>
+      <div class="chart-box"><canvas id="chartThroughput"></canvas></div>
+      <div class="chart-box"><canvas id="chartNetwork"></canvas></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="section-title">
+      <h2>Simulation History</h2>
+      <button class="secondary" id="refreshBtn">Refresh</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>Traffic</th><th>CPU %</th><th>Memory %</th>
+            <th>Latency ms</th><th>Response ms</th><th>Throughput</th>
+            <th>Network %</th><th>Servers</th><th>Cost</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

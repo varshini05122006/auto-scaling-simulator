@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Database files (the app creates a fresh one on start)
+*.db
+*.sqlite3
+
+# Secrets - never upload these
+.env
+*.pem
+*.key
+credentials*
+
+# Editor and system files
+.vscode/
+.DS_Store
+Thumbs.db
